@@ -1,0 +1,401 @@
+	qMensaje$ = "Programa TEST"
+	qQRCodeTxt$ = ""	
+	qLabelFileFolder$ = "/C/LABELS/"
+	qArrayLimit% = 1000
+	qDateFilename$ = "C:DATECODES.TXT"
+	qWait%=100
+	qErrores%= 0
+	
+	DO% = 262
+	DOS% = 277
+	RE% = 294
+	RES% = 311
+	MI% = 330
+	FA% = 349
+	FAS% = 370
+	SOL% = 392
+	SOLS% = 411
+	LA% = 440
+	LAS% = 466
+	SI% = 494
+	
+	
+	
+	qDisplayOUT%= 100
+	qDisplayIN%= 110
+	
+	INC%=0
+	qPort%=5
+	
+	
+	GOSUB zInicio
+	
+	zInicio:		
+		CHDIR "/c"
+  		RUN"su -p pass admin"  
+		                                        	
+		OPEN "console:" FOR OUTPUT AS qDisplayOUT%
+				
+		GOSUB zClearArray
+		GOSUB zMusica
+		qMensaje$= "":gosub zPantalla
+		GOSUB zGetSerialNumber			
+		'GOSUB zGetDateCodesFile
+		
+		COMSET PORT%,"",CHR$(13),"+",CHR$(13),50
+		ON COMSET PORT% GOSUB zEscuchaLan
+		COMSET PORT% ON
+		qMensaje$= "MAIN":gosub zPantalla 
+		GOSUB zMainLoop
+	RETURN
+	
+	zMainLoop:		
+		
+		'WHILE A$<>"SALIR"
+		'WEND
+		FOR qI%=0 TO 1
+			'qMensaje$="NET1":gosub zPantalla
+			COMSET qPort%,"",CHR$(13),"+",CHR$(13),50
+			ON COMSET qPort% GOSUB zEscuchaLan
+			COMSET qPort% ON
+		NEXT		
+	
+		qMensaje$="1:PRINT 6:EXIT":gosub zPantalla
+'		INPUT "1-PRINT 6-EXIT", C$
+			IF A$="1" THEN GOSUB zCreaEtiqueta ELSE qMensaje$= "1:PRINT 6:EXIT"
+			IF A$="6" THEN GOSUB zEnd else GOSUB zPantalla
+		GOSUB zMainLoop		
+	RETURN
+	
+	zEscuchaLan: 
+		A$=COMBUF$(PORT%)
+		qMensaje$= STR$(INC%)+"'"+A$+"'":gosub zPantalla
+		INC%=INC%+1
+		COMSET PORT% ON
+	RETURN
+	
+	
+	zGetSerialNumber:
+		OPEN "C:SERIAL.TXT" FOR INPUT AS #72
+		IF qErr% THEN
+			qSerialNumber% = 1
+		ELSE
+			qTmp$=INPUT$(LOF(72),72)
+			qSerialNumber% = VAL(qTmp$)
+		ENDIF
+		CLOSE #72
+	RETURN
+	
+	zSaveSerialNumber:		
+		'qMensaje$ = "Errores "+STR$(qErrores%):GOSUB zPantalla
+		'qErrores% = qErrores% + 1
+		ON ERROR GOTO zSaveSerialNumber
+			IF qErrores% > 3 THEN RETURN ELSE qErrores% = qErrores% +1
+				OPEN "C:SERIAL.TXT" FOR OUTPUT AS #72				              
+					qMensaje$ = STR$(qSerialNumber%):GOSUB zPantalla
+					PRINT #72,STR$(qSerialNumber%)				
+				CLOSE #72	
+				qMensaje$ = "File Updated":GOSUB zPantalla
+				qErrores% = 0
+				gosub zwait		
+	RETURN
+	
+
+	zPantalla:             	
+		PRINT #qDisplayOUT%,qMensaje$
+	return
+
+		
+	RETURN
+
+	zMusica:
+		qMensaje$="ITA v1.0":gosub zPantalla
+		SOUND DO%,10:SOUND DO%,10:SOUND DO%,10:SOUND FA%,20:SOUND LA%,20
+		SOUND DO%,10:SOUND DO%,10:SOUND DO%,10:SOUND FA%,20:SOUND LA%,20		
+		SOUND FA%,10:SOUND FA%,10:SOUND MI%,10:SOUND MI%,10:SOUND RE%,10:SOUND RE%,20:SOUND DO%,20
+	RETURN
+
+	zImprimeArchivo:
+		qMensaje$ = "IMPRIMIENDO":GOSUB zPantalla
+		CLL
+		CLIP ON
+		EXECUTE "TMP:PRINTFILE.FMT"
+		PF
+		GOSUB zWait		
+	RETURN
+
+	zEnd:
+		qMensaje$= "EXIT ITA v1.0"
+		GOSUB zPantalla
+		COMSET 5 OFF		
+		CLOSE qDisplayOUT%		
+		END
+	return
+	
+	zWait:
+		' Doesn't do the "GOSUB zComSet" in zWait
+		qWaitTime%=TICKS+qWait%
+		'* Wait the qWait% specified amount of time...
+		WHILE TICKS<qWaitTime%:WEND
+	RETURN 
+
+	zCreaEtiqueta:					
+		qLfFileName$ = "C:S2.TXT"
+		CLOSE #76
+			OPEN qLfFileName$ FOR INPUT AS #76
+			qFilePrinted% = 0
+			qQRCodeTxt$ = ""
+		    WHILE NOT (EOF(76) OR qStopPrintingLabels%)
+			   	LINE INPUT #76, qDataLine$
+		
+				IF INSTR(LEFT$(qDataLine$,15),"LAYOUT INPUT") THEN 
+					qLineFlag% = 1
+					qStart% = 0
+				ENDIF
+				
+				IF INSTR(LEFT$(qDataLine$,15),"LAYOUT END") THEN qLineFlag% = 2
+		
+				IF INSTR(LEFT$(qDataLine$,15),"STORE") THEN 
+					GOSUB zWriteToArray
+				ELSE IF qLineFlag% = 1 THEN
+					IF qStart% > 0 THEN 
+						qSpecial% = 0 
+						IF INSTR(qDataLine$,"@") THEN 
+							IF NOT qErr% THEN qSpecial% = 1
+						ENDIF
+						IF qSpecial% > 0 THEN GOSUB zSpecialData
+						GOSUB zWriteToArray
+						'IF qStopPrintingLabels% THEN RETURN
+					ENDIF
+					qStart% = qStart% + 1
+				ENDIF
+		
+				IF qLineFlag% = 2 THEN
+					GOSUB zWriteToFile
+					GOSUB zImprimeArchivo
+					GOSUB zClearArray
+					qFilePrinted% = 1
+					qCounter% = qCounter%+1:GOSUB zIncrementSerialNumber
+				ENDIF
+		
+			WEND
+			CLOSE #76
+			qMensaje$ = "zCreaEtiqueta":GOSUB zPantalla
+			IF NOT qFilePrinted% THEN
+				qMensaje$= "Error en Crear Etiqueta"
+				GOSUB zPantalla
+				'qDisplText1$="Err: File Format": qDisplText2$= qLfFileName$: GOSUB zDisplayUntilKey
+				'qLogError$="Error: Label layout file was not generated from LabelShop Pro <"+ qLfFileName$ +">" : GOSUB zLogError	
+				'qStopPrintingLabels%=1
+			ENDIF ELSE GOSUB zImprimeArchivo
+			
+	RETURN
+	
+	
+	zSpecialData:
+		qStart% = 0
+		qErr% = 0
+		qNewDataLine$ = ""
+		qLen% = LEN(qDataLine$)
+		
+		FOR qi% = 1 TO qLen% STEP 1	
+			qSingleChar$ = MID$(qDataLine$,qi%,1)
+			qSpecialChar$ = MID$(qDataLine$,qi%,2)
+	'		IF qErr% THEN qSpecialChar$ = ""
+	'		IF qSpecialChar$ = "@Y" THEN
+	'			GOSUB zGetYearCode
+	'			qNewDataLine$ = qNewDataLine$ + qYearCode$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@M" THEN
+	'			GOSUB zGetMonthCode
+	'			qNewDataLine$ = qNewDataLine$ + qMonthCode$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@J" THEN
+	'			GOSUB zGetJulianDate
+	'			qNewDataLine$ = qNewDataLine$ + qJulianDate$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@P" THEN
+	'			qNewDataLine$ = qNewDataLine$ + qPartNo$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@D" THEN
+	'			GOSUB zGetDate
+	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@F" THEN
+	'			GOSUB zGetFormat : ' this modifies qi%. (format string is indeterminate len)
+	'			GOSUB zGetFormattedDate :' uses qFormatStr$ from zGetFormat
+	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+	'			'qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@T" THEN
+	'			GOSUB zGetTime
+	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+	'			qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@C" THEN
+	'			GOSUB zGetFormat : ' this modifies qi%. (format string is indeterminate len)
+	'			GOSUB zGetFormattedTime :' uses qFormatStr$ from zGetFormat
+	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+	'			'qi% = qi% + 1
+	'		ELSE IF qSpecialChar$ = "@S" THEN
+	'			qNewDataLine$ = qNewDataLine$ + FORMAT$(STR$(qSerialNumber%),"00000")
+	'			qi% = qi% + 1
+	'		ELSE
+	'			qNewDataLine$ = qNewDataLine$ + qSingleChar$
+	'		ENDIF
+			
+			IF qSpecialChar$ = "@T" THEN
+				GOSUB zGetTime
+				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+				qi% = qi% + 1
+			ELSE IF qSpecialChar$ = "@D" THEN
+				GOSUB zGetDate
+				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+				qi% = qi% + 1
+			ELSE IF qSpecialChar$ = "@S" THEN
+				qNewDataLine$ = qNewDataLine$ + FORMAT$(STR$(qSerialNumber%),"00000")
+				qi% = qi% + 1
+			ELSE
+				qNewDataLine$ = qNewDataLine$ + qSingleChar$
+			ENDIF
+		
+		NEXT qi%
+		qDataLine$ = qNewDataLine$
+	RETURN
+
+	zGetTime:
+		FORMAT TIME$ "HH:MM:SS"
+		zGetTimeFromPrinter:	
+			qErr% = 0
+			qReplaceStr$ = TIME$("F")
+			IF qErr% THEN 
+				'qDisplText1$="Err Time Not Set": qDisplText2$="F3 to Set Time" : GOSUB zDisplayUntilKey
+				'qLogError$="Error: Time not set. Label "+qPartNo$+" not printed properly" : GOSUB zLogError
+				'qReplaceStr$="" : qStopPrintingLabels% = 1
+			ENDIF
+	RETURN
+
+	zGetDate:
+		FORMAT DATE$ qDATEFORMAT$
+		zGetDateFromPrinter:
+			qErr% = 0
+			qReplaceStr$ = Date$("F")
+			IF qErr% THEN 
+				'qDisplText1$="Err Date Not Set": qDisplText2$="F3 to Set Date" : GOSUB zDisplayUntilKey
+				'qLogError$="Error: Date not set. Label "+qPartNo$+" not printed properly" : GOSUB zLogError
+				'qReplaceStr$="" : qStopPrintingLabels% = 1
+			ENDIF
+	RETURN
+	
+
+	
+	zWriteToFile:
+	 	ON ERROR GOTO zWriteToFile2
+			KILL "TMP:PRINTFILE.FMT"
+		zWriteToFile2:
+			OPEN "TMP:PRINTFILE.FMT" FOR OUTPUT AS #78
+			qQRCode% = 0
+			FOR I% = 1 TO qArrayInc% STEP 1
+				qTempLine$ = qDataArray$(I%)
+				qErr% = 0
+				qIdx% = INSTR(qTempLine$,"QRCODE")
+				IF (qIdx% > 0) THEN 
+					IF NOT qErr% THEN qQRCode% = 1
+				ENDIF
+				IF (qQRCode% >= 1) THEN GOSUB zSetQRCode
+				PRINT #78,qDataArray$(I%)
+			NEXT I%
+			CLOSE #78
+			GOSUB zWait
+	RETURN
+	
+	
+	zSetQRCode:
+		qQRCode% = qQRCode% + 1
+		qIdx% = INSTR(qDataArray$(I%),"PB")
+		IF qIdx% = 0 THEN qIdx% = INSTR(qDataArray$(I%),"PRBAR")
+		IF qIdx% = 0 THEN RETURN
+	
+		qQRCode% = 0
+		qIdx% = LEN(qDataArray$(I%))
+		qIdx% = qIdx% - INSTR(qDataArray$(I%),CHR$(34)) 
+		qTempCode$ = RIGHT$(qDataArray$(I%), qIdx%)
+		qIdx% = INSTR(qTempCode$,CHR$(34))
+		qTempCode$ = LEFT$(qTempCode$, (qIdx%-1))
+		' This is where you would add separator characters, right after this: qQRCodeTxt$ +
+		qQRCodeTxt$ = qQRCodeTxt$ + qTempCode$
+	RETURN
+	
+	
+	'Write qDataLine to array and increment pointer.
+	zWriteToArray:
+		IF qDimArray% = 0 THEN
+			DIM qDataArray$ (qArrayLimit%)
+			qDimArray% = 1
+		ENDIF
+		qArrayInc% = qArrayInc% + 1
+		qDataArray$(qArrayInc%) = qDataLine$
+		IF qArrayInc% >= qArrayLimit% THEN 
+			'qDisplText1$="Err Lbl FileSize": qDisplText2$= qLfFileName$: GOSUB zDisplayUntilKey
+			qLogError$="Error: Label lines exceeds maximum. Increase program maximum." : GOSUB zLogError
+			qStopPrintingLabels% = 1	
+		ENDIF
+	RETURN
+	
+	
+	zClearArray:	
+		IF qDimArray% = 0 THEN
+			DIM qDataArray$ (qArrayLimit%)
+			qDimArray% = 1
+		ENDIF
+				
+		FOR I% = 1 TO qArrayLimit% STEP 1
+			qDataArray$(I%) = ""
+		NEXT I%
+		
+		qArrayInc% = 0
+		qLineFlag% = 0
+		qStart% = 0
+	RETURN	
+		
+	
+	'Check to see if the file exist on the printers C drive
+	'INPUTS: 	qFileName$
+	'OUTPUTS:  	qFileFound% = 1 if file exist else 0
+	zCheckForFile:
+		qFileFound% = 0 : qFname$ = qFileName$
+		RUN"su -p pass admin"	:'Default to admin rights when looking for files.
+		qFullFolderFilename$ = qLabelFileFolder$+qFileName$
+		qFname$ = FILENAME$(qFullFolderFilename$)
+		IF qFname$ = qFileName$ THEN qFileFound% = 1
+	RETURN
+	
+	zGetDateCodesFile:
+		' get codes from date code file:
+		CLOSE qDateFile%
+		qAllDates$="" : qDateFile% = 73
+		qErr% = 0
+		OPEN qDateFilename$ FOR INPUT AS qDateFile%
+		IF qErr% THEN 
+			' an error has occurred....
+			qLogError$="Error: "+STR$(qErr%)+". Was not able to open Datecodes file "+qDateFilename$ : GOSUB zLogError
+			'qDisplText1$="Err Dt code File": qDisplText2$=qDateFilename$ : GOSUB zDisplayUntilKey
+			RETURN
+		ENDIF
+		qAllDates$=INPUT$(LOF(qDateFile%),qDateFile%)
+		CLOSE qDateFile%	
+	RETURN
+
+	zLogError:
+		GOSUB zPantalla
+	return
+
+	
+	zIncrementSerialNumber:
+		qSerialNumber% = qSerialNumber%+1
+		IF qSerialNumber% > 99999 THEN
+			qSerialNumber% = 1
+		ENDIF
+		GOSUB zSaveSerialNumber
+	RETURN	
+	
+
+	

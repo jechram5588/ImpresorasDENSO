@@ -1,4 +1,3 @@
-	IMMEDIATE OFF
 	qMensaje$ = "Programa TEST"
 	qQRCodeTxt$ = ""	
 	qLabelFileFolder$ = "/C/LABELS/"
@@ -18,9 +17,7 @@
 	SOLS% = 411
 	LA% = 440
 	LAS% = 466
-	SI% = 494
-	
-	
+	SI% = 494	
 	
 	qDisplayOUT%= 100
 	qDisplayIN%= 110
@@ -43,10 +40,11 @@
 		GOSUB zGetSerialNumber			
 		'GOSUB zGetDateCodesFile
 		
-		COMSET PORT%,"",CHR$(13),"+",CHR$(13),50
-		ON COMSET PORT% GOSUB zEscuchaLan
-		COMSET PORT% ON
+		COMSET qPort%,"",CHR$(13),"+",CHR$(13),50
+		ON COMSET qPort% GOSUB zEscuchaLan
+		COMSET qPort% ON
 		qMensaje$= "MAIN":gosub zPantalla 
+				
 		GOSUB zMainLoop
 	RETURN
 	
@@ -54,25 +52,22 @@
 		
 		'WHILE A$<>"SALIR"
 		'WEND
-		FOR qI%=0 TO 1
-			'qMensaje$="NET1":gosub zPantalla
-			COMSET qPort%,"",CHR$(13),"+",CHR$(13),50
-			ON COMSET qPort% GOSUB zEscuchaLan
-			COMSET qPort% ON
-		NEXT		
-	
-		qMensaje$="1:PRINT 6:EXIT":gosub zPantalla
+		'FOR qI%=0 TO 1			
+		'NEXT                             			
+		qMensaje$=STR$(INC%)+A$+"S2 S9":gosub zPantalla
 '		INPUT "1-PRINT 6-EXIT", C$
-			IF A$="1" THEN GOSUB zCreaEtiqueta ELSE qMensaje$= "1:PRINT 6:EXIT"
-			IF A$="6" THEN GOSUB zEnd else GOSUB zPantalla
+		IF A$="EXIT" THEN GOSUB zEnd 
+		IF A$="S2" THEN GOSUB zCreaEtiqueta 
+		IF A$="S9" THEN GOSUB zCreaEtiqueta		
 		GOSUB zMainLoop		
 	RETURN
 	
 	zEscuchaLan: 
-		A$=COMBUF$(PORT%)
+		A$=COMBUF$(qPort%)
 		qMensaje$= STR$(INC%)+"'"+A$+"'":gosub zPantalla
 		INC%=INC%+1
-		COMSET PORT% ON
+		GOSUB zWait
+		COMSET qPort% ON
 	RETURN
 	
 	
@@ -106,8 +101,6 @@
 		PRINT #qDisplayOUT%,qMensaje$
 	return
 
-		
-	RETURN
 
 	zMusica:
 		qMensaje$="ITA v1.0":gosub zPantalla
@@ -140,8 +133,9 @@
 		WHILE TICKS<qWaitTime%:WEND
 	RETURN 
 
-	zCreaEtiqueta:					
-		qLfFileName$ = "C:S2.TXT"
+	zCreaEtiqueta:
+		qLfFileName$ = "C:"+A$+".TXT"
+		A$=""	
 		CLOSE #76
 			OPEN qLfFileName$ FOR INPUT AS #76
 			qFilePrinted% = 0
@@ -201,48 +195,7 @@
 		
 		FOR qi% = 1 TO qLen% STEP 1	
 			qSingleChar$ = MID$(qDataLine$,qi%,1)
-			qSpecialChar$ = MID$(qDataLine$,qi%,2)
-	'		IF qErr% THEN qSpecialChar$ = ""
-	'		IF qSpecialChar$ = "@Y" THEN
-	'			GOSUB zGetYearCode
-	'			qNewDataLine$ = qNewDataLine$ + qYearCode$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@M" THEN
-	'			GOSUB zGetMonthCode
-	'			qNewDataLine$ = qNewDataLine$ + qMonthCode$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@J" THEN
-	'			GOSUB zGetJulianDate
-	'			qNewDataLine$ = qNewDataLine$ + qJulianDate$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@P" THEN
-	'			qNewDataLine$ = qNewDataLine$ + qPartNo$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@D" THEN
-	'			GOSUB zGetDate
-	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@F" THEN
-	'			GOSUB zGetFormat : ' this modifies qi%. (format string is indeterminate len)
-	'			GOSUB zGetFormattedDate :' uses qFormatStr$ from zGetFormat
-	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
-	'			'qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@T" THEN
-	'			GOSUB zGetTime
-	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
-	'			qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@C" THEN
-	'			GOSUB zGetFormat : ' this modifies qi%. (format string is indeterminate len)
-	'			GOSUB zGetFormattedTime :' uses qFormatStr$ from zGetFormat
-	'			qNewDataLine$ = qNewDataLine$ + qReplaceStr$
-	'			'qi% = qi% + 1
-	'		ELSE IF qSpecialChar$ = "@S" THEN
-	'			qNewDataLine$ = qNewDataLine$ + FORMAT$(STR$(qSerialNumber%),"00000")
-	'			qi% = qi% + 1
-	'		ELSE
-	'			qNewDataLine$ = qNewDataLine$ + qSingleChar$
-	'		ENDIF
-			
+			qSpecialChar$ = MID$(qDataLine$,qi%,2)	
 			IF qSpecialChar$ = "@T" THEN
 				GOSUB zGetTime
 				qNewDataLine$ = qNewDataLine$ + qReplaceStr$

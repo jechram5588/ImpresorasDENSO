@@ -4,6 +4,7 @@
 	qArrayLimit% = 1000
 	qDateFilename$ = "C:DATECODES.TXT"
 	qWait%=100
+	qWait2%=25
 	qErrores%= 0
 	
 	DO% = 262
@@ -44,8 +45,22 @@
 		ON COMSET qPort% GOSUB zEscuchaLan
 		COMSET qPort% ON
 		qMensaje$= "MAIN":gosub zPantalla 
+		
+		ON KEY (1) GOSUB zEtiquitaS2
+		KEY (1) ON
+		
+		ON KEY (2) GOSUB zEtiquitaS9
+		KEY (2) ON
 				
 		GOSUB zMainLoop
+	RETURN
+	
+	zEtiquitaS2:
+		A$="S2"
+	RETURN
+	
+	zEtiquitaS9:
+		A$="S9"
 	RETURN
 	
 	zMainLoop:		
@@ -54,11 +69,12 @@
 		'WEND
 		'FOR qI%=0 TO 1			
 		'NEXT                             			
-		qMensaje$=STR$(INC%)+A$+"S2 S9":gosub zPantalla
+		qMensaje$=STR$(INC%)+A$+" 1-S2 2-S9":gosub zPantalla
 '		INPUT "1-PRINT 6-EXIT", C$
 		IF A$="EXIT" THEN GOSUB zEnd 
 		IF A$="S2" THEN GOSUB zCreaEtiqueta 
-		IF A$="S9" THEN GOSUB zCreaEtiqueta		
+		IF A$="S9" THEN GOSUB zCreaEtiqueta	
+		gosub zWait2	
 		GOSUB zMainLoop		
 	RETURN
 	
@@ -131,6 +147,11 @@
 		qWaitTime%=TICKS+qWait%
 		'* Wait the qWait% specified amount of time...
 		WHILE TICKS<qWaitTime%:WEND
+	RETURN
+	
+	zWait2:
+		qWaitTime2%=TICKS+qWait2%
+		WHILE TICKS<qWaitTime2%:WEND
 	RETURN 
 
 	zCreaEtiqueta:

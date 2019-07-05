@@ -45,8 +45,22 @@
 		ON COMSET qPort% GOSUB zEscuchaLan
 		COMSET qPort% ON
 		qMensaje$= "MAIN":gosub zPantalla 
+		
+		ON KEY (1) GOSUB zEtiquitaS2
+		KEY (1) ON
+		
+		ON KEY (2) GOSUB zEtiquitaS9
+		KEY (2) ON
 				
 		GOSUB zMainLoop
+	RETURN
+	
+	zEtiquitaS2:
+		A$="S2"
+	RETURN
+	
+	zEtiquitaS9:
+		A$="S9"
 	RETURN
 	
 	zMainLoop:		
@@ -55,7 +69,7 @@
 		'WEND
 		'FOR qI%=0 TO 1			
 		'NEXT                             			
-		qMensaje$=STR$(INC%)+A$+"S2 S9":gosub zPantalla
+		qMensaje$=STR$(INC%)+" 1-S2 2-S9":gosub zPantalla
 '		INPUT "1-PRINT 6-EXIT", C$
 		IF A$="EXIT" THEN GOSUB zEnd 
 		IF A$="S2" THEN GOSUB zCreaEtiqueta 

@@ -1,4 +1,4 @@
-	qMensaje$ = "Programa TEST"
+	qMensaje$ = ""
 	qQRCodeTxt$ = ""	
 	qLabelFileFolder$ = "/C/LABELS/"
 	qArrayLimit% = 1000
@@ -6,6 +6,8 @@
 	qWait%=100
 	qWait2%=25
 	qErrores%= 0
+	qTiempo% = 0
+	qPantMen% = 0
 	
 	DO% = 262
 	DOS% = 277
@@ -26,6 +28,15 @@
 	INC%=0
 	qPort%=5
 	
+'	OPEN "console:" FOR OUTPUT AS qDisplayOUT%
+'	GOSUB zTest
+'	
+'	zTest:
+'		FOR qI%=0 TO 10						
+'			qMensaje$=STR$(qI%):GOSUB zPantalla
+'			gosub zWait			
+'		NEXT
+'	END
 	
 	GOSUB zInicio
 	
@@ -37,22 +48,35 @@
 				
 		GOSUB zClearArray
 		GOSUB zMusica
-		qMensaje$= "":gosub zPantalla
 		GOSUB zGetSerialNumber			
 		'GOSUB zGetDateCodesFile
 		
 		COMSET qPort%,"",CHR$(13),"+",CHR$(13),50
 		ON COMSET qPort% GOSUB zEscuchaLan
 		COMSET qPort% ON
-		qMensaje$= "MAIN":gosub zPantalla 
 		
 		ON KEY (1) GOSUB zEtiquitaS2
 		KEY (1) ON
 		
 		ON KEY (2) GOSUB zEtiquitaS9
 		KEY (2) ON
+		
+		ON KEY (3) GOSUB zEtiquita4311
+		KEY (3) ON
+		
+		ON KEY (4) GOSUB zEtiquita4671
+		KEY (4) ON	
+		
+		ON KEY (17) GOSUB zFeed
+		KEY (17) ON
+		
+		qMensaje$=STR$(INC%)+"1-S2 2-S9":gosub zPantalla		
 				
 		GOSUB zMainLoop
+	RETURN
+	
+	zFeed:
+		FF
 	RETURN
 	
 	zEtiquitaS2:
@@ -63,19 +87,47 @@
 		A$="S9"
 	RETURN
 	
+	zEtiquita4311:
+		A$="4311"
+	RETURN
+	
+	zEtiquita4671:
+		A$="4671"
+	RETURN
+	
 	zMainLoop:		
 		
 		'WHILE A$<>"SALIR"
 		'WEND
 		'FOR qI%=0 TO 1			
-		'NEXT                             			
-		qMensaje$=STR$(INC%)+A$+" 1-S2 2-S9":gosub zPantalla
-'		INPUT "1-PRINT 6-EXIT", C$
+		'NEXT
+		IF INC% >10 THEN INC% = 0
+		IF qTiempo% > 25 THEN qTiempo% = 0 ELSE qTiempo%= qTiempo% +1
+		
+				   			
+		IF qTiempo% = 0 THEN
+			IF qPantMen% = 0 THEN
+				qMensaje$="3-4311 4-4671":gosub zPantalla 				
+				qPantMen% = 1
+			ELSE 
+				qMensaje$="1-S2 2-S9":gosub zPantalla
+				qPantMen% = 0
+			ENDIF				 
+		ENDIF
+		
+		
 		IF A$="EXIT" THEN GOSUB zEnd 
 		IF A$="S2" THEN GOSUB zCreaEtiqueta 
-		IF A$="S9" THEN GOSUB zCreaEtiqueta	
+		IF A$="S9" THEN GOSUB zCreaEtiqueta
+		IF A$="4311" THEN GOSUB zCreaEtiqueta	
+		IF A$="4671" THEN GOSUB zCreaEtiqueta		
+		
 		gosub zWait2	
 		GOSUB zMainLoop		
+	RETURN
+	
+	zDispClear:
+		PRINT#qDisplayOUT%,CHR$(155)+"2J";
 	RETURN
 	
 	zEscuchaLan: 
@@ -113,13 +165,37 @@
 	RETURN
 	
 
-	zPantalla:             	
-		PRINT #qDisplayOUT%,qMensaje$
+	zPantalla:
+		GOSUB zDispClear
+		PRINT #qDisplayOUT%,"   ITA v1.0"
+		ql%= LEN(qMensaje$)
+		ql%= 15 - ql%
+		
+		qSpace$=""
+		IF ql% = 1 THEN qSpace$ = ""
+		IF ql% = 2 THEN qSpace$ = "-"
+		IF ql% = 3 THEN qSpace$ = "-"
+		IF ql% = 4 THEN qSpace$ = "--"
+		IF ql% = 5 THEN qSpace$ = "--"
+		IF ql% = 6 THEN qSpace$ = "---"
+		IF ql% = 7 THEN qSpace$ = "---"
+		IF ql% = 8 THEN qSpace$ = "----"
+		IF ql% = 9 THEN qSpace$ = "----"
+		IF ql% = 10 THEN qSpace$ = "-----"
+		IF ql% = 11 THEN qSpace$ = "-----"
+		IF ql% = 12 THEN qSpace$ = "------"
+		IF ql% = 13 THEN qSpace$ = "------"
+		IF ql% = 14 THEN qSpace$ = "------"
+		IF ql% = 15 THEN qSpace$ = "-------"
+		
+		
+		            	
+		PRINT #qDisplayOUT%,qSpace$+qMensaje$;
 	return
 
 
 	zMusica:
-		qMensaje$="ITA v1.0":gosub zPantalla
+		qMensaje$="INICIANDO":GOSUB zPantalla
 		SOUND DO%,10:SOUND DO%,10:SOUND DO%,10:SOUND FA%,20:SOUND LA%,20
 		SOUND DO%,10:SOUND DO%,10:SOUND DO%,10:SOUND FA%,20:SOUND LA%,20		
 		SOUND FA%,10:SOUND FA%,10:SOUND MI%,10:SOUND MI%,10:SOUND RE%,10:SOUND RE%,20:SOUND DO%,20
@@ -156,7 +232,8 @@
 
 	zCreaEtiqueta:
 		qLfFileName$ = "C:"+A$+".TXT"
-		A$=""	
+		A$=""
+  		qTiempo% = 0			
 		CLOSE #76
 			OPEN qLfFileName$ FOR INPUT AS #76
 			qFilePrinted% = 0
@@ -196,7 +273,6 @@
 		
 			WEND
 			CLOSE #76
-			qMensaje$ = "zCreaEtiqueta":GOSUB zPantalla
 			IF NOT qFilePrinted% THEN
 				qMensaje$= "Error en Crear Etiqueta"
 				GOSUB zPantalla

@@ -28,15 +28,6 @@
 	INC%=0
 	qPort%=5
 	
-'	OPEN "console:" FOR OUTPUT AS qDisplayOUT%
-'	GOSUB zTest
-'	
-'	zTest:
-'		FOR qI%=0 TO 10						
-'			qMensaje$=STR$(qI%):GOSUB zPantalla
-'			gosub zWait			
-'		NEXT
-'	END
 	
 	GOSUB zInicio
 	
@@ -66,6 +57,9 @@
 		
 		ON KEY (4) GOSUB zEtiquita4671
 		KEY (4) ON	
+				
+		ON KEY (12) GOSUB zConfigFecha
+		KEY (12) ON
 		
 		ON KEY (17) GOSUB zFeed
 		KEY (17) ON
@@ -73,26 +67,6 @@
 		qMensaje$=STR$(INC%)+"1-S2 2-S9":gosub zPantalla		
 				
 		GOSUB zMainLoop
-	RETURN
-	
-	zFeed:
-		FF
-	RETURN
-	
-	zEtiquitaS2:
-		A$="S2"
-	RETURN
-	
-	zEtiquitaS9:
-		A$="S9"
-	RETURN
-	
-	zEtiquita4311:
-		A$="4311"
-	RETURN
-	
-	zEtiquita4671:
-		A$="4671"
 	RETURN
 	
 	zMainLoop:		
@@ -124,6 +98,94 @@
 		
 		gosub zWait2	
 		GOSUB zMainLoop		
+	RETURN
+	
+	zFeed:
+		FF
+	RETURN
+	
+	zEtiquitaS2:
+		A$="S2"
+	RETURN
+	
+	zEtiquitaS9:
+		A$="S9"
+	RETURN
+	
+	zEtiquita4311:
+		A$="4311"
+	RETURN
+	
+	zEtiquita4671:
+		A$="4671"
+	RETURN
+	
+	
+	
+	
+	zConfigFecha:
+		OPEN "CONSOLE:" FOR INPUT AS qDisplayIN%
+		GOSUB zDispClear
+		GOSUB zDesactivaKeys		
+		
+		qFecha$=""
+		qHora$=""
+		
+		zConfigDate:
+			PRINT #qDisplayOUT%,"FECHA YYMMDD"
+			FOR qI%=0  to 5   					
+				qFecha$= qFecha$ + INPUT$(1,qDisplayIN%)                                        				
+				GOSUB zDispClear
+				PRINT #qDisplayOUT%,"FECHA YYMMDD"
+				PRINT #qDisplayOUT%,qFecha$;			
+				gosub zWait2			
+			NEXT
+		
+		DATE$ = qFecha$
+		GOSUB zDispClear		
+		zConfigHour:
+			PRINT #qDisplayOUT%,"HORA HHMMSS"
+			FOR qI%=0 TO 5						
+				qHora$= qHora$+INPUT$(1,qDisplayIN%)
+				GOSUB zDispClear
+				PRINT #qDisplayOUT%,"HORA HHMMSS"
+				PRINT #qDisplayOUT%,qHora$;			
+				gosub zWait2			
+			NEXT
+		
+		FORMAT TIME$ "HHMMSS"
+		TIME$= qHora$
+		
+		GOSUB zDispClear
+		FORMAT DATE$ "DD/MM/YYYY"
+		FORMAT TIME$ "HH:MM:SS"
+		PRINT #qDisplayOUT%,DATE$("F")
+		PRINT #qDisplayOUT%,TIME$("F");
+		GOSUB zWait
+		GOSUB zWait
+		GOSUB zDispClear
+		PRINT #qDisplayOUT%,"DONE"
+		CLOSE qDisplayIN%		
+		GOSUB zActivaKeys
+		
+	RETURN
+	
+	zDesactivaKeys:
+		KEY (1) OFF
+		KEY (2) OFF
+		KEY (3) OFF
+		KEY (4) OFF
+		KEY (12) OFF
+		KEY (17) OFF
+	RETURN
+	
+	zActivaKeys:
+		KEY (1) ON
+		KEY (2) ON
+		KEY (3) ON
+		KEY (4) ON
+		KEY (12) ON
+		KEY (17) ON
 	RETURN
 	
 	zDispClear:
@@ -167,26 +229,20 @@
 
 	zPantalla:
 		GOSUB zDispClear
-		PRINT #qDisplayOUT%,"   ITA v1.0"
+		PRINT #qDisplayOUT%,"    ITA v1.0"
 		ql%= LEN(qMensaje$)
 		ql%= 15 - ql%
 		
 		qSpace$=""
 		IF ql% = 1 THEN qSpace$ = ""
-		IF ql% = 2 THEN qSpace$ = "-"
-		IF ql% = 3 THEN qSpace$ = "-"
-		IF ql% = 4 THEN qSpace$ = "--"
-		IF ql% = 5 THEN qSpace$ = "--"
-		IF ql% = 6 THEN qSpace$ = "---"
-		IF ql% = 7 THEN qSpace$ = "---"
-		IF ql% = 8 THEN qSpace$ = "----"
-		IF ql% = 9 THEN qSpace$ = "----"
-		IF ql% = 10 THEN qSpace$ = "-----"
-		IF ql% = 11 THEN qSpace$ = "-----"
-		IF ql% = 12 THEN qSpace$ = "------"
-		IF ql% = 13 THEN qSpace$ = "------"
-		IF ql% = 14 THEN qSpace$ = "------"
-		IF ql% = 15 THEN qSpace$ = "-------"
+		IF ql% = 2 THEN qSpace$ = " "
+		IF ql% = 3 THEN qSpace$ = " "
+		IF ql% = 4 THEN qSpace$ = "  "
+		IF ql% = 5 THEN qSpace$ = "  "
+		IF ql% = 6 THEN qSpace$ = "   "
+		IF ql% = 7 THEN qSpace$ = "   "
+		IF ql% = 8 THEN qSpace$ = "    "
+		IF ql% = 9 THEN qSpace$ = "    "
 		
 		
 		            	
@@ -293,7 +349,16 @@
 		FOR qi% = 1 TO qLen% STEP 1	
 			qSingleChar$ = MID$(qDataLine$,qi%,1)
 			qSpecialChar$ = MID$(qDataLine$,qi%,2)	
-			IF qSpecialChar$ = "@T" THEN
+			
+			IF qSpecialChar$ = "@Y" THEN
+				GOSUB zGetYearCode
+				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+				qi% = qi% + 1			
+			ELSE IF qSpecialChar$ = "@M" THEN
+				GOSUB zGetMonthCode
+				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
+				qi% = qi% + 1
+			ELSE IF qSpecialChar$ = "@T" THEN
 				GOSUB zGetTime
 				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
 				qi% = qi% + 1
@@ -311,7 +376,19 @@
 		NEXT qi%
 		qDataLine$ = qNewDataLine$
 	RETURN
-
+	
+	zGetYearCode:
+		qReplaceStr$=""
+		FORMAT DATE$ "YYYY"
+		qReplaceStr$ = Date$("F")
+	RETURN
+	
+	zGetMonthCode:
+		qReplaceStr$ = ""
+		FORMAT DATE$ "MM"
+		qReplaceStr$ = Date$("F")
+	RETURN
+	
 	zGetTime:
 		FORMAT TIME$ "HH:MM:SS"
 		zGetTimeFromPrinter:	

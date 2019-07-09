@@ -216,11 +216,11 @@
 		qMensaje$= STR$(INC%)+"'"+qNet$+"'":gosub zPantalla
 		INC%=INC%+1
 		
-		IF qNet$="EXIT" THEN qNet$="":GOSUB zEnd 
-		IF qNet$="S2" THEN qNet$="":GOSUB zCreaEtiqueta 
-		IF qNet$="S9" THEN qNet$="":GOSUB zCreaEtiqueta
-		IF qNet$="4311" THEN qNet$="":GOSUB zCreaEtiqueta	
-		IF qNet$="4671" THEN qNet$="":GOSUB zCreaEtiqueta
+		IF qNet$="EXIT" THEN GOSUB zEnd 
+		IF qNet$="S2" THEN qFile$="S2":qNet$="":GOSUB zCreaEtiqueta 
+		IF qNet$="S9" THEN qFile$="S9":qNet$="":GOSUB zCreaEtiqueta
+		IF qNet$="4311" THEN qFile$="4311":qNet$="":GOSUB zCreaEtiqueta	
+		IF qNet$="4671" THEN qFile$="4671":qNet$="":GOSUB zCreaEtiqueta
 		
 		GOSUB zWait
 		COMSET qPort% ON

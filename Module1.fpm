@@ -386,6 +386,9 @@
 				GOSUB zGetTime
 				qNewDataLine$ = qNewDataLine$ + qReplaceStr$
 				qi% = qi% + 1
+			ELSE IF qSpecialChar$ = "@P" THEN
+				qNewDataLine$ = qNewDataLine$ + qFile$
+				qi% = qi% + 1
 			ELSE IF qSpecialChar$ = "@D" THEN
 				GOSUB zGetDate
 				qNewDataLine$ = qNewDataLine$ + qReplaceStr$

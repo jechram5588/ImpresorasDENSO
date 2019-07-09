@@ -1,8 +1,8 @@
 	qMensaje$ = ""
 	qQRCodeTxt$ = ""	
-	qLabelFileFolder$ = "/C/LABELS/"
+	'qLabelFileFolder$ = "/C/LABELS/"
 	qArrayLimit% = 1000
-	qDateFilename$ = "C:DATECODES.TXT"
+	'qDateFilename$ = "C:DATECODES.TXT"
 	qWait%=100
 	qWait2%=25
 	qErrores%= 0
@@ -58,6 +58,9 @@
 		ON KEY (4) GOSUB zEtiquita4671
 		KEY (4) ON	
 				
+		ON KEY (10) GOSUB zMuestraFecha
+		KEY (10) ON
+		
 		ON KEY (12) GOSUB zConfigFecha
 		KEY (12) ON
 		
@@ -77,18 +80,7 @@
 		'NEXT
 		IF INC% >10 THEN INC% = 0
 		IF qTiempo% > 25 THEN qTiempo% = 0 ELSE qTiempo%= qTiempo% +1
-		
-				   			
-		IF qTiempo% = 0 THEN
-			IF qPantMen% = 0 THEN
-				qMensaje$="3-4311 4-4671":gosub zPantalla 				
-				qPantMen% = 1
-			ELSE 
-				qMensaje$="1-S2 2-S9":gosub zPantalla
-				qPantMen% = 0
-			ENDIF				 
-		ENDIF
-		
+		IF qTiempo% = 0 THEN GOSUB zMostrarOpciones	
 		
 		IF A$="EXIT" THEN GOSUB zEnd 
 		IF A$="S2" THEN GOSUB zCreaEtiqueta 
@@ -96,8 +88,20 @@
 		IF A$="4311" THEN GOSUB zCreaEtiqueta	
 		IF A$="4671" THEN GOSUB zCreaEtiqueta		
 		
-		gosub zWait2	
+		GOSUB zWait2	
 		GOSUB zMainLoop		
+	RETURN
+	
+	
+	zMostrarOpciones:		
+		IF qPantMen% = 0 THEN
+			qMensaje$="3-4311 4-4671":gosub zPantalla 				
+			qPantMen% = 1
+		ELSE 
+			qMensaje$="1-S2 2-S9":gosub zPantalla
+			qPantMen% = 0
+		ENDIF			 
+		
 	RETURN
 	
 	zFeed:
@@ -119,9 +123,7 @@
 	zEtiquita4671:
 		A$="4671"
 	RETURN
-	
-	
-	
+		
 	
 	zConfigFecha:
 		OPEN "CONSOLE:" FOR INPUT AS qDisplayIN%
@@ -130,7 +132,14 @@
 		
 		qFecha$=""
 		qHora$=""
+		qAsk$=""
+		zConfigAsk:
+			PRINT #qDisplayOUT%,"1:CONFIGURAR"
+			PRINT #qDisplayOUT%,"0:CANCELAR";
+			qAsk$=INPUT$(1,qDisplayIN%)
+			IF  qAsk$ <> "1" THEN GOTO zFechaEnd
 		
+		GOSUB zDispClear
 		zConfigDate:
 			PRINT #qDisplayOUT%,"FECHA YYMMDD"
 			FOR qI%=0  to 5   					
@@ -155,7 +164,15 @@
 		
 		FORMAT TIME$ "HHMMSS"
 		TIME$= qHora$
+		GOSUB zMuestraFecha
+		GOSUB zFechaEnd		
 		
+		zFechaEnd:			
+			CLOSE qDisplayIN%	
+		
+	RETURN
+	
+	zMuestraFecha:
 		GOSUB zDispClear
 		FORMAT DATE$ "DD/MM/YYYY"
 		FORMAT TIME$ "HH:MM:SS"
@@ -163,11 +180,9 @@
 		PRINT #qDisplayOUT%,TIME$("F");
 		GOSUB zWait
 		GOSUB zWait
-		GOSUB zDispClear
-		PRINT #qDisplayOUT%,"DONE"
-		CLOSE qDisplayIN%		
+		GOSUB zDispClear 		
 		GOSUB zActivaKeys
-		
+		GOSUB zMostrarOpciones		
 	RETURN
 	
 	zDesactivaKeys:
@@ -175,6 +190,7 @@
 		KEY (2) OFF
 		KEY (3) OFF
 		KEY (4) OFF
+		KEY (10) OFF
 		KEY (12) OFF
 		KEY (17) OFF
 	RETURN
@@ -184,6 +200,7 @@
 		KEY (2) ON
 		KEY (3) ON
 		KEY (4) ON
+		KEY (10) ON
 		KEY (12) ON
 		KEY (17) ON
 	RETURN
@@ -221,7 +238,7 @@
 					qMensaje$ = STR$(qSerialNumber%):GOSUB zPantalla
 					PRINT #72,STR$(qSerialNumber%)				
 				CLOSE #72	
-				qMensaje$ = "File Updated":GOSUB zPantalla
+				'qMensaje$ = "File Updated":GOSUB zPantalla
 				qErrores% = 0
 				gosub zwait		
 	RETURN
@@ -289,7 +306,7 @@
 	zCreaEtiqueta:
 		qLfFileName$ = "C:"+A$+".TXT"
 		A$=""
-  		qTiempo% = 0			
+  		'qTiempo% = 0			
 		CLOSE #76
 			OPEN qLfFileName$ FOR INPUT AS #76
 			qFilePrinted% = 0

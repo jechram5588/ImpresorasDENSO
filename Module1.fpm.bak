@@ -28,6 +28,9 @@
 	INC%=0
 	qPort%=5
 	
+	qKey$=""
+	qNet$=""
+	
 	
 	GOSUB zInicio
 	
@@ -74,7 +77,7 @@
 	
 	zMainLoop:		
 		
-		'WHILE A$<>"SALIR"
+		'WHILE qNet$<>"SALIR"
 		'WEND
 		'FOR qI%=0 TO 1			
 		'NEXT
@@ -82,11 +85,10 @@
 		IF qTiempo% > 25 THEN qTiempo% = 0 ELSE qTiempo%= qTiempo% +1
 		IF qTiempo% = 0 THEN GOSUB zMostrarOpciones	
 		
-		IF A$="EXIT" THEN GOSUB zEnd 
-		IF A$="S2" THEN GOSUB zCreaEtiqueta 
-		IF A$="S9" THEN GOSUB zCreaEtiqueta
-		IF A$="4311" THEN GOSUB zCreaEtiqueta	
-		IF A$="4671" THEN GOSUB zCreaEtiqueta		
+		IF qKey$="S2" THEN qFile$="S2":qKey$="":GOSUB zCreaEtiqueta 
+		IF qKey$="S9" THEN qFile$="S9":qKey$="":GOSUB zCreaEtiqueta
+		IF qKey$="4311" THEN qFile$="4311":qKey$="":GOSUB zCreaEtiqueta	
+		IF qKey$="4671" THEN qFile$="4671":qKey$="":GOSUB zCreaEtiqueta		
 		
 		GOSUB zWait2	
 		GOSUB zMainLoop		
@@ -100,8 +102,7 @@
 		ELSE 
 			qMensaje$="1-S2 2-S9":gosub zPantalla
 			qPantMen% = 0
-		ENDIF			 
-		
+		ENDIF	
 	RETURN
 	
 	zFeed:
@@ -109,19 +110,19 @@
 	RETURN
 	
 	zEtiquitaS2:
-		A$="S2"
+		qKey$="S2"
 	RETURN
 	
 	zEtiquitaS9:
-		A$="S9"
+		qKey$="S9"
 	RETURN
 	
 	zEtiquita4311:
-		A$="4311"
+		qKey$="4311"
 	RETURN
 	
 	zEtiquita4671:
-		A$="4671"
+		qKey$="4671"
 	RETURN
 		
 	
@@ -130,8 +131,8 @@
 		GOSUB zDispClear
 		GOSUB zDesactivaKeys		
 		
-		qFecha$=""
-		qHora$=""
+		qFechqNet$=""
+		qHorqNet$=""
 		qAsk$=""
 		zConfigAsk:
 			PRINT #qDisplayOUT%,"1:CONFIGURAR"
@@ -143,31 +144,32 @@
 		zConfigDate:
 			PRINT #qDisplayOUT%,"FECHA YYMMDD"
 			FOR qI%=0  to 5   					
-				qFecha$= qFecha$ + INPUT$(1,qDisplayIN%)                                        				
+				qFechqNet$= qFechqNet$ + INPUT$(1,qDisplayIN%)                                        				
 				GOSUB zDispClear
 				PRINT #qDisplayOUT%,"FECHA YYMMDD"
-				PRINT #qDisplayOUT%,qFecha$;			
+				PRINT #qDisplayOUT%,qFechqNet$;			
 				gosub zWait2			
 			NEXT
 		
-		DATE$ = qFecha$
+		DATE$ = qFechqNet$
 		GOSUB zDispClear		
 		zConfigHour:
 			PRINT #qDisplayOUT%,"HORA HHMMSS"
 			FOR qI%=0 TO 5						
-				qHora$= qHora$+INPUT$(1,qDisplayIN%)
+				qHorqNet$= qHorqNet$+INPUT$(1,qDisplayIN%)
 				GOSUB zDispClear
 				PRINT #qDisplayOUT%,"HORA HHMMSS"
-				PRINT #qDisplayOUT%,qHora$;			
+				PRINT #qDisplayOUT%,qHorqNet$;			
 				gosub zWait2			
 			NEXT
 		
 		FORMAT TIME$ "HHMMSS"
-		TIME$= qHora$
+		TIME$= qHorqNet$
 		GOSUB zMuestraFecha
-		GOSUB zFechaEnd		
+		GOTO zFechaEnd		
 		
-		zFechaEnd:			
+		zFechaEnd:
+			GOSUB zActivaKeys			
 			CLOSE qDisplayIN%	
 		
 	RETURN
@@ -210,9 +212,16 @@
 	RETURN
 	
 	zEscuchaLan: 
-		A$=COMBUF$(qPort%)
-		qMensaje$= STR$(INC%)+"'"+A$+"'":gosub zPantalla
+		qNet$=COMBUF$(qPort%)
+		qMensaje$= STR$(INC%)+"'"+qNet$+"'":gosub zPantalla
 		INC%=INC%+1
+		
+		IF qNet$="EXIT" THEN qNet$="":GOSUB zEnd 
+		IF qNet$="S2" THEN qNet$="":GOSUB zCreaEtiqueta 
+		IF qNet$="S9" THEN qNet$="":GOSUB zCreaEtiqueta
+		IF qNet$="4311" THEN qNet$="":GOSUB zCreaEtiqueta	
+		IF qNet$="4671" THEN qNet$="":GOSUB zCreaEtiqueta
+		
 		GOSUB zWait
 		COMSET qPort% ON
 	RETURN
@@ -304,9 +313,7 @@
 	RETURN 
 
 	zCreaEtiqueta:
-		qLfFileName$ = "C:"+A$+".TXT"
-		A$=""
-  		'qTiempo% = 0			
+		qLfFileName$ = "C:"+qFile$+".TXT"  					
 		CLOSE #76
 			OPEN qLfFileName$ FOR INPUT AS #76
 			qFilePrinted% = 0

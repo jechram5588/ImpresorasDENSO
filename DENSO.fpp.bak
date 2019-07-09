@@ -330,12 +330,7 @@
 			""
 			</Watches>
 			<BreakPoints>
-				<BreakPoint>
-				"1000;			IF  qAsk$ <> {\34}1{\34} "
-				</BreakPoint>
-				<BreakPoint>
-				"1010;		GOSUB zDispClear"
-				</BreakPoint>
+			""
 			</BreakPoints>
 		</Debugger>
 	</Custom>

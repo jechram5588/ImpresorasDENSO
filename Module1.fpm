@@ -212,9 +212,9 @@
 	RETURN
 	
 	zEscuchaLan: 
-		qNet$=COMBUF$(qPort%)
-		qMensaje$= STR$(INC%)+"'"+qNet$+"'":gosub zPantalla
-		INC%=INC%+1
+		qNet$ = COMBUF$(qPort%)
+		qMensaje$ = STR$(INC%)+"'"+qNet$+"'":gosub zPantalla
+		INC% = INC% + 1
 		
 		IF qNet$="EXIT" THEN GOSUB zEnd 
 		IF qNet$="S2" THEN qFile$="S2":qNet$="":GOSUB zCreaEtiqueta 
@@ -222,7 +222,7 @@
 		IF qNet$="4311" THEN qFile$="4311":qNet$="":GOSUB zCreaEtiqueta	
 		IF qNet$="4671" THEN qFile$="4671":qNet$="":GOSUB zCreaEtiqueta
 		
-		GOSUB zWait
+		GOSUB zWait2
 		COMSET qPort% ON
 	RETURN
 	
@@ -242,14 +242,14 @@
 		'qMensaje$ = "Errores "+STR$(qErrores%):GOSUB zPantalla
 		'qErrores% = qErrores% + 1
 		ON ERROR GOTO zSaveSerialNumber
-			IF qErrores% > 3 THEN RETURN ELSE qErrores% = qErrores% +1
+			IF qErrores% > 3 THEN RETURN ELSE qErrores% = qErrores% + 1
 				OPEN "C:SERIAL.TXT" FOR OUTPUT AS #72				              
-					qMensaje$ = STR$(qSerialNumber%):GOSUB zPantalla
+					'qMensaje$ = STR$(qSerialNumber%):GOSUB zPantalla
 					PRINT #72,STR$(qSerialNumber%)				
 				CLOSE #72	
 				'qMensaje$ = "File Updated":GOSUB zPantalla
 				qErrores% = 0
-				gosub zwait		
+				gosub zwait2		
 	RETURN
 	
 
@@ -268,8 +268,7 @@
 		IF ql% = 6 THEN qSpace$ = "   "
 		IF ql% = 7 THEN qSpace$ = "   "
 		IF ql% = 8 THEN qSpace$ = "    "
-		IF ql% = 9 THEN qSpace$ = "    "
-		
+		IF ql% = 9 THEN qSpace$ = "    "	
 		
 		            	
 		PRINT #qDisplayOUT%,qSpace$+qMensaje$;

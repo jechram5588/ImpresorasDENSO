@@ -1,6 +1,6 @@
 	qMensaje$ = ""
 	qQRCodeTxt$ = ""	
-	'qLabelFileFolder$ = "/C/LABELS/"
+	qDATEFORMAT$ = "YYYYMMDD"
 	qArrayLimit% = 1000
 	'qDateFilename$ = "C:DATECODES.TXT"
 	qWait%=100
@@ -405,8 +405,14 @@
 	
 	zGetYearCode:
 		qReplaceStr$=""
-		FORMAT DATE$ "YYYY"
+		FORMAT DATE$ "YY"
 		qReplaceStr$ = Date$("F")
+		IF qReplaceStr$ = "19" THEN qReplaceStr$ = "C"
+		IF qReplaceStr$ = "20" THEN qReplaceStr$ = "D"
+		IF qReplaceStr$ = "21" THEN qReplaceStr$ = "E"
+		IF qReplaceStr$ = "22" THEN qReplaceStr$ = "F"
+		IF qReplaceStr$ = "23" THEN qReplaceStr$ = "G"
+		
 	RETURN
 	
 	zGetMonthCode:
@@ -438,7 +444,6 @@
 				'qReplaceStr$="" : qStopPrintingLabels% = 1
 			ENDIF
 	RETURN
-	
 
 	
 	zWriteToFile:

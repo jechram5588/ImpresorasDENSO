@@ -1,6 +1,6 @@
 	qMensaje$ = ""
 	qQRCodeTxt$ = ""	
-	'qLabelFileFolder$ = "/C/LABELS/"
+	qDATEFORMAT$ = "YYYYMMDD"
 	qArrayLimit% = 1000
 	'qDateFilename$ = "C:DATECODES.TXT"
 	qWait%=100
@@ -249,7 +249,7 @@
 				CLOSE #72	
 				'qMensaje$ = "File Updated":GOSUB zPantalla
 				qErrores% = 0
-				gosub zwait		
+				gosub zwait2		
 	RETURN
 	
 
